@@ -29,7 +29,7 @@ static struct kobj_attribute led_state_attr = __ATTR(led_state, 0660, my_module_
 
 static int my_module_probe(struct platform_device *pdev)
 {
-	printk("Running device probe\n");
+	printk("LED: Running device probe\n");
 
 	int err;
 	struct device *dev = &pdev->dev;
@@ -78,7 +78,7 @@ static int my_module_probe(struct platform_device *pdev)
 
 static int my_module_remove(struct platform_device *pdev)
 {
-    printk("Running device remove\n");
+    printk("LED: Running device remove\n");
     // Turn off LED
     gpiod_set_value(led0, 0);
     // Cleanup sysfs entry
@@ -93,28 +93,27 @@ static struct of_device_id my_driver_of_match[] = {
 };
 MODULE_DEVICE_TABLE(of, my_driver_of_match);
 
-static struct platform_driver my_device_driver = {
+static struct platform_driver my_led_driver = {
 	.probe = my_module_probe,
 	.remove = my_module_remove,
 	.driver = {
-		.name = "my_device_driver",
+		.name = "my_led_driver",
 		.of_match_table = my_driver_of_match,
 	}
 };
 
-static int __init my_module_init(void)
-{
-	printk("Hello World! Again!\n");
-	platform_driver_register(&my_device_driver);
-	return 0;
-}
+// static int __init my_module_init(void)
+// {
+// 	printk("Hello World! Again!\n");
+// 	platform_driver_register(&my_led_driver);
+// 	return 0;
+// }
 
-static void __exit my_module_exit(void)
-{
-	printk("Goodbye Cruel World! Again!\n");
-	platform_driver_unregister(&my_device_driver);
-}
+// static void __exit my_module_exit(void)
+// {
+// 	printk("Goodbye Cruel World! Again!\n");
+// 	platform_driver_unregister(&my_led_driver);
+// }
 
-module_init(my_module_init);
-module_exit(my_module_exit);
+module_platform_driver(my_led_driver);
 MODULE_LICENSE("GPL");

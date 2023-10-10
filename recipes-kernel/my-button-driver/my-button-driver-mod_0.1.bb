@@ -14,4 +14,4 @@ S = "${WORKDIR}"
 # The inherit of module.bbclass will automatically name module packages with
 # "kernel-module-" prefix as required by the oe-core build environment.
 
-RPROVIDES:${PN} += "kernel-module-my_led_driver"
+RPROVIDES:${PN} += "kernel-module-my_button_driver"

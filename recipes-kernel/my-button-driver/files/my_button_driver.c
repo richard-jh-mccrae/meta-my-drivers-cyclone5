@@ -5,14 +5,10 @@
 #include <linux/platform_device.h>
 #include <linux/interrupt.h>
 
-static struct gpio_desc *btn0 = NULL;
-static unsigned int irq_number;
-
-// To be define later ....
-// struct my_btn_data {
-//     struct gpio_desc *btn;
-//     unsigned int irq_number;
-// };
+struct my_btn_data {
+    struct gpio_desc *btn;
+    unsigned int irq_number;
+};
 
 static irq_handler_t btn_irq_handler(unsigned int irq, void *dev_id, struct pt_regs *regs) {
 	printk("Btn interrupt triggered!\n");
@@ -21,20 +17,20 @@ static irq_handler_t btn_irq_handler(unsigned int irq, void *dev_id, struct pt_r
 
 static int my_module_probe(struct platform_device *pdev)
 {
-	printk("Running device probe\n");
+	printk("Button: Running device probe\n");
 
 	int err;
-	struct device *dev = &pdev->dev;
 	int db;
     const char *label;
 
-    // struct my_btn_data *btn_data;
+    struct my_btn_data *btn_data;
+	struct device *dev = &pdev->dev;
 
-    // btn_data = devm_kzalloc(dev, sizeof(struct my_btn_data), GFP_KERNEL);
-    // if (!btn_data) {
-    //     printk("Unable to allocate memory for btn struct\n");
-    //     return -ENOMEM;
-    // }
+    btn_data = devm_kzalloc(dev, sizeof(struct my_btn_data), GFP_KERNEL);
+    if (!btn_data) {
+        printk("Unable to allocate memory for btn struct\n");
+        return -ENOMEM;
+    }
 
 	// Hardcoded fetch btn0
 	struct fwnode_handle *fwnode_btn0 = device_get_named_child_node(dev, "btn0");
@@ -56,19 +52,19 @@ static int my_module_probe(struct platform_device *pdev)
 	printk("Debounce interval is: %d\n", db);
 
 	// Set up button as GPIO input device
-	btn0 = devm_fwnode_gpiod_get(dev, fwnode_btn0, NULL, GPIOD_IN, label);
-	if(IS_ERR(btn0)) {
+	btn_data->btn = devm_fwnode_gpiod_get(dev, fwnode_btn0, NULL, GPIOD_IN, label);
+	if(IS_ERR(btn_data->btn)) {
 		printk("Error, could not set up GPIO\n");
 		return -EIO;
 	}
 	printk("Button set up as GPIO device\n");
 
 	// Get valid IRQ number
-	irq_number = gpiod_to_irq(btn0);
-	printk("IRQ number: %d\n", irq_number);
+	btn_data->irq_number = gpiod_to_irq(btn_data->btn);
+	printk("IRQ number: %d\n", btn_data->irq_number);
 
 	// Set up IRQ
-	err = devm_request_irq(dev, irq_number,
+	err = devm_request_irq(dev, btn_data->irq_number,
 						   (irq_handler_t) btn_irq_handler,
 					 	   IRQF_TRIGGER_FALLING,
 					       "btn0_irq", NULL);
@@ -78,7 +74,9 @@ static int my_module_probe(struct platform_device *pdev)
 	}
 
 	// Set debounce interval
-	gpiod_set_debounce(btn0, db * 1000);
+	gpiod_set_debounce(btn_data->btn, db * 1000);
+
+	platform_set_drvdata(pdev, btn_data);
 
     return 0;
 }
@@ -86,7 +84,11 @@ static int my_module_probe(struct platform_device *pdev)
 
 static int my_module_remove(struct platform_device *pdev)
 {
-	printk("Running device remove\n");
+	printk("Button: Running device remove\n");
+
+	struct my_btn_data *btn_data = platform_get_drvdata(pdev);
+	printk("IRQ number: %d\n", btn_data->irq_number);
+
 	return 0;
 }
 
@@ -96,28 +98,14 @@ static struct of_device_id my_driver_of_match[] = {
 };
 MODULE_DEVICE_TABLE(of, my_driver_of_match);
 
-static struct platform_driver my_device_driver = {
+static struct platform_driver my_button_driver = {
 	.probe = my_module_probe,
 	.remove = my_module_remove,
 	.driver = {
-		.name = "my_device_driver",
+		.name = "my_button_driver",
 		.of_match_table = my_driver_of_match,
 	}
 };
 
-static int __init my_module_init(void)
-{
-	printk("Hello World!\n");
-	platform_driver_register(&my_device_driver);
-	return 0;
-}
-
-static void __exit my_module_exit(void)
-{
-	printk("Goodbye Cruel World!\n");
-	platform_driver_unregister(&my_device_driver);
-}
-
-module_init(my_module_init);
-module_exit(my_module_exit);
+module_platform_driver(my_button_driver);
 MODULE_LICENSE("GPL");
