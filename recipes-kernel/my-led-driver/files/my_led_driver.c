@@ -88,7 +88,7 @@ static int my_module_remove(struct platform_device *pdev)
 }
 
 static struct of_device_id my_driver_of_match[] = {
-	{ .compatible = "my-gpio-led", },
+	{ .compatible = "my-gpio-leds", },
 	{ },
 };
 MODULE_DEVICE_TABLE(of, my_driver_of_match);
