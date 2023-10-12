@@ -102,18 +102,5 @@ static struct platform_driver my_led_driver = {
 	}
 };
 
-// static int __init my_module_init(void)
-// {
-// 	printk("Hello World! Again!\n");
-// 	platform_driver_register(&my_led_driver);
-// 	return 0;
-// }
-
-// static void __exit my_module_exit(void)
-// {
-// 	printk("Goodbye Cruel World! Again!\n");
-// 	platform_driver_unregister(&my_led_driver);
-// }
-
 module_platform_driver(my_led_driver);
 MODULE_LICENSE("GPL");

@@ -1,4 +1,4 @@
-obj-m := my_button_driver.o
+obj-m := my_button_driver_cyclone5.o
 
 SRC := $(shell pwd)
 
